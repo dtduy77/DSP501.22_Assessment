@@ -41,13 +41,13 @@ python run_wiener.py
 
 ---
 
-### Kalman Filter
+### mmse_stsa_stable Filter
 
 ```
-python run_kalman.py
+python run_mmse_stsa_stable.py
 ```
 
-➡ Output: `results/kalman_output.wav`
+➡ Output: `results/mmse_stsa_stable_output_1.wav`
 
 
 
