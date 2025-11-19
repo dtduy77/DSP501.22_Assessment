@@ -14,7 +14,7 @@ def mmse_lsa(
     n_fft: int = N_FFT,
     hop_length: int = HOP,
     alpha: float = 0.98,          # Decision-directed factor
-    noise_percentile: float = 20  # Nếu là Nhạc, hãy giảm xuống 5-10
+    noise_percentile: float = 20  
 ) -> np.ndarray:
     """
     MMSE-LSA (Log-Spectral Amplitude) Estimator:
@@ -33,7 +33,7 @@ def mmse_lsa(
     n_freq, n_frames = Y_pow.shape
 
     # ===== 2. Ước lượng PSD noise (Minimum Statistics) =====
-    # Nếu input là nhạc, khuyến nghị giảm noise_percentile xuống thấp (ví dụ 5-10)
+
     noise_psd = np.percentile(Y_pow, noise_percentile, axis=1, keepdims=True)
     noise_psd = np.maximum(noise_psd, eps)
 
