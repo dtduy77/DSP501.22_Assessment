@@ -1,35 +1,39 @@
+# file: run_mmse_stsa_stable.py
+
 from utils.audio_io import load_wav, save
 from utils.metrics import snr_db
-from filter.wiener_filter import wiener_filter_no_ref
+from filter.mmse_stsa_stable import mmse_stsa_stable
 
 # ==============================
-# 1. LOAD FILES
+# 1. LOAD
 # ==============================
 clean = load_wav("data/music_clean_1.wav")
 noisy = load_wav("data/music_noisy_1.wav")
 
-# Đồng bộ chiều dài
 min_len = min(len(clean), len(noisy))
 clean = clean[:min_len]
 noisy = noisy[:min_len]
 
 # ==============================
-# 2. WIENER FILTER (NO-REFERENCE)
+# 2. MMSE-STSA (stable)
 # ==============================
-enhanced = wiener_filter_no_ref(
+enhanced = mmse_stsa_stable(
     noisy,
-    beta=0.8,                # muốn lọc mạnh → tăng lên 0.7–0.8
-    noise_percentile=15      # muốn lọc mạnh → giảm xuống 10
+    sr=16000,
+    n_fft=1024,
+    hop_length=256,
+    alpha=0.98,
+    noise_percentile=20.0,  # có thể thử 10–30
 )
 
 # ==============================
 # 3. SNR
 # ==============================
-print("SNR input  :", snr_db(clean, noisy))
-print("SNR Wiener :", snr_db(clean, enhanced))
+print("SNR input :", snr_db(clean, noisy))
+print("SNR MMSE  :", snr_db(clean, enhanced))
 
 # ==============================
 # 4. SAVE
 # ==============================
-save("results/wiener_no_ref_1.wav", enhanced)
-print("DONE → results/wiener_no_ref_1.wav")
+save("results/mmse_stsa_stable_output_1.wav", enhanced)
+print("DONE → results/mmse_stsa_stable_output_1.wav")

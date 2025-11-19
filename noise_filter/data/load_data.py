@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import librosa
 import soundfile as sf
 
-FILE = "music_clean.wav"     
+FILE = "music_noisy.wav"     
 SR   = 16000                     
 
 # ===========================
@@ -32,7 +32,7 @@ plt.figure(figsize=(14,8))
 # ----- Waveform -----
 plt.subplot(2,1,1)
 plt.plot(x, linewidth=0.7)
-plt.title("Waveform")
+plt.title("Waveform (Noisy)")
 plt.xlabel("Samples")
 plt.ylabel("Amplitude")
 
