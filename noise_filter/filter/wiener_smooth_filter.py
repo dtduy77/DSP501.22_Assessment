@@ -17,7 +17,7 @@ def wiener_smooth(
     noise_percentile: float = 20  # dùng percentile để ước lượng PSD nhiễu
 ) -> np.ndarray:
     """
-    MMSE-STSA (bản ổn định, không dùng Bessel):
+    Wiener Smoothing Filter:
     - Dùng decision-directed prior SNR (Ephraim-Malah)
     - Gain dạng Wiener-like: G = ξ / (1 + ξ)
     - Noise PSD được ước lượng bằng percentile (minimum-statistics approx)
@@ -33,7 +33,7 @@ def wiener_smooth(
     n_freq, n_frames = Y_pow.shape
 
     # ===== 2. Ước lượng PSD noise bằng percentile (minimum statistics) =====
-    # Lấy ví dụ 20th percentile cho mỗi bin tần số
+
     noise_psd = np.percentile(Y_pow, noise_percentile, axis=1, keepdims=True)
     noise_psd = np.maximum(noise_psd, eps)
 
