@@ -41,13 +41,13 @@ python run_wiener.py
 
 ---
 
-### mmse_stsa_stable Filter
+### wiener_smooth Filter
 
 ```
-python run_mmse_stsa_stable.py
+python run_wiener_smooth.py
 ```
 
-➡ Output: `results/mmse_stsa_stable_output_1.wav`
+➡ Output: `results/wiener_smooth_output_1.wav`
 
 
 

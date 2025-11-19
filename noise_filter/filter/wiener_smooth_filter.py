@@ -1,4 +1,4 @@
-# file: filter/mmse_stsa_stable.py
+# file: filter/wiener_smooth.py
 
 import numpy as np
 import librosa
@@ -8,7 +8,7 @@ N_FFT = 1024
 HOP = 256
 
 
-def mmse_stsa_stable(
+def wiener_smooth(
     noisy: np.ndarray,
     sr: int = SR,
     n_fft: int = N_FFT,

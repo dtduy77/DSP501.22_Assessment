@@ -1,8 +1,8 @@
-# file: run_mmse_stsa_stable.py
+# file: run_wiener_smooth.py
 
 from utils.audio_io import load_wav, save
 from utils.metrics import snr_db
-from filter.mmse_stsa_stable import mmse_stsa_stable
+from filter.wiener_smooth_filter import wiener_smooth
 
 # ==============================
 # 1. LOAD
@@ -15,9 +15,9 @@ clean = clean[:min_len]
 noisy = noisy[:min_len]
 
 # ==============================
-# 2. MMSE-STSA (stable)
+# 2. WIENER SMOOTH
 # ==============================
-enhanced = mmse_stsa_stable(
+enhanced = wiener_smooth(
     noisy,
     sr=16000,
     n_fft=1024,
@@ -35,5 +35,5 @@ print("SNR MMSE  :", snr_db(clean, enhanced))
 # ==============================
 # 4. SAVE
 # ==============================
-save("results/mmse_stsa_stable_output_1.wav", enhanced)
-print("DONE → results/mmse_stsa_stable_output_1.wav")
+save("results/wiener_smooth_output_1.wav", enhanced)
+print("DONE → results/wiener_smooth_output_1.wav")
