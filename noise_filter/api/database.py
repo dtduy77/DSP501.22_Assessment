@@ -34,9 +34,9 @@ class AudioProcessing(Base):
     filter_b_time = Column(Float)
     
     # Best (Auto-select best filter)
-    combine_improvement = Column(Float)
-    combine_performance = Column(Float)
-    combine_time = Column(Float)
+    best_improvement = Column(Float)
+    best_performance = Column(Float)
+    best_time = Column(Float)
 
 
 def init_db():

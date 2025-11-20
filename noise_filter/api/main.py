@@ -104,9 +104,9 @@ async def process_file(
         filter_b_improvement=results['mmse']['improvement_percent'],
         filter_b_performance=results['mmse']['performance'],
         filter_b_time=results['mmse']['time_seconds'],
-        combine_improvement=results['combined']['improvement_percent'],
-        combine_performance=results['combined']['performance'],
-        combine_time=results['combined']['time_seconds']
+        best_improvement=results['best']['improvement_percent'],
+        best_performance=results['best']['performance'],
+        best_time=results['best']['time_seconds']
     )
     
     db.add(db_record)
@@ -133,9 +133,9 @@ async def process_file(
                 time_seconds=db_record.filter_b_time
             ),
             "best": FilterInfo(
-                improvement_percent=db_record.combine_improvement,
-                performance=db_record.combine_performance,
-                time_seconds=db_record.combine_time
+                improvement_percent=db_record.best_improvement,
+                performance=db_record.best_performance,
+                time_seconds=db_record.best_time
             )
         }
     )
@@ -174,9 +174,9 @@ async def get_file_detail(file_id: int, db: Session = Depends(get_db)):
                 time_seconds=record.filter_b_time
             ),
             "best": FilterInfo(
-                improvement_percent=record.combine_improvement,
-                performance=record.combine_performance,
-                time_seconds=record.combine_time
+                improvement_percent=record.best_improvement,
+                performance=record.best_performance,
+                time_seconds=record.best_time
             )
         }
     )

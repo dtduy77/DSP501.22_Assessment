@@ -16,30 +16,9 @@ from utils.metrics import snr_db
 
 def calculate_improvement(snr_before, snr_after):
     """Calculate improvement percentage"""
-    # Calculate absolute improvement in dB
-    improvement_db = snr_after - snr_before
-    
-    # If input SNR is very low or negative, use absolute improvement
-    if abs(snr_before) < 1:
-        return round(improvement_db * 10, 2)  # Scale for better percentage
-    
-    # Otherwise calculate percentage improvement
     improvement = ((snr_after - snr_before) / abs(snr_before)) * 100
     return round(improvement, 2)
 
-
-def calculate_snr_improvement(original, enhanced):
-    """Calculate SNR improvement between original and enhanced signal"""
-    # Estimate noise as the difference between original and enhanced
-    noise_estimate = original - enhanced
-    
-    # Calculate power of signal and noise
-    signal_power = np.mean(enhanced ** 2)
-    noise_power = np.mean(noise_estimate ** 2) + 1e-12
-    
-    # Calculate SNR in dB
-    snr = 10 * np.log10(signal_power / noise_power)
-    return snr
 
 
 def calculate_performance(snr_after):
@@ -66,21 +45,22 @@ def process_audio_file(file_path: str, output_dir: str, noise_ref_path: str = No
     """
     # Load audio
     noisy = load_wav(file_path)
-    
-    # If no noise reference provided, use last 1 second as noise
-    if noise_ref_path is None:
-        sr = 16000
-        noise_ref = noisy[-sr:]  # Last 1 second
-    else:
-        noise_ref = load_wav(noise_ref_path)
+
+    # Load clean reference used for evaluation (test dataset)
+    # Use absolute path relative to this file's location
+    current_dir = Path(__file__).parent.parent
+    clean_ref_path = current_dir / "data" / "music_clean_1.wav"
+    clean = load_wav(str(clean_ref_path))
+
+    # Align clean and noisy lengths for evaluation
+    min_len_eval = min(len(clean), len(noisy))
+    clean = clean[:min_len_eval]
+    noisy = noisy[:min_len_eval]
     
     results = {}
     
-    # Calculate baseline SNR (original noisy signal)
-    # Estimate noise from noise reference
-    noise_power = np.mean(noise_ref ** 2) + 1e-12
-    signal_power = np.mean(noisy ** 2)
-    snr_input = 10 * np.log10(signal_power / noise_power)
+    # Calculate baseline SNR (original noisy signal) using clean reference
+    snr_input = snr_db(clean, noisy)
     
     # === WIENER SMOOTH FILTER ===
     start_time = time.time()
@@ -93,14 +73,9 @@ def process_audio_file(file_path: str, output_dir: str, noise_ref_path: str = No
         noise_percentile=20.0
     )
     wiener_time = time.time() - start_time
-    
-    # Ensure same length as input
-    min_len = min(len(noisy), len(wiener_output))
-    wiener_output = wiener_output[:min_len]
-    noisy_aligned = noisy[:min_len]
-    
-    # Calculate SNR for Wiener output
-    snr_wiener = calculate_snr_improvement(noisy_aligned, wiener_output)
+
+    # Calculate SNR for Wiener output using clean reference
+    snr_wiener = snr_db(clean, wiener_output)
     
     results['wiener'] = {
         'output': wiener_output,
@@ -120,12 +95,8 @@ def process_audio_file(file_path: str, output_dir: str, noise_ref_path: str = No
         noise_percentile=20.0
     )
     mmse_time = time.time() - start_time
-    
-    # Ensure same length as input
-    min_len = min(len(noisy), len(mmse_output))
-    mmse_output = mmse_output[:min_len]
-    
-    snr_mmse = calculate_snr_improvement(noisy_aligned, mmse_output)
+
+    snr_mmse = snr_db(clean, mmse_output)
     
     results['mmse'] = {
         'output': mmse_output,
@@ -140,22 +111,22 @@ def process_audio_file(file_path: str, output_dir: str, noise_ref_path: str = No
     
     # Select the filter with better SNR
     if snr_wiener > snr_mmse:
-        combined_output = wiener_output
-        combined_method = "wiener_smooth"
-        snr_combined = snr_wiener
+        best_output = wiener_output
+        best_method = "wiener_smooth"
+        snr_best = snr_wiener
+        best_time = wiener_time
     else:
-        combined_output = mmse_output
-        combined_method = "mmse_lsa"
-        snr_combined = snr_mmse
+        best_output = mmse_output
+        best_method = "mmse_lsa"
+        snr_best = snr_mmse
+        best_time = mmse_time
     
-    combined_time = time.time() - start_time
-    
-    results['combined'] = {
-        'output': wiener_output,
-        'improvement_percent': calculate_improvement(snr_input, snr_combined),
-        'performance': calculate_performance(snr_combined),
-        'time_seconds': round(combined_time, 3),
-        'selected_method': combined_method  # Track which filter was selected
+    results['best'] = {
+        'output': best_output,
+        'improvement_percent': calculate_improvement(snr_input, snr_best),
+        'performance': calculate_performance(snr_best),
+        'time_seconds': round(best_time, 3),
+        'selected_method': best_method  # Track which filter was selected
     }
     
     # Save processed file (combined as best result)
@@ -164,7 +135,7 @@ def process_audio_file(file_path: str, output_dir: str, noise_ref_path: str = No
     
     file_basename = Path(file_path).stem
     processed_file_path = output_path / f"{file_basename}_processed1.wav"
-    save_audio_file(combined_output, str(processed_file_path))
+    save_audio_file(best_output, str(processed_file_path))
     
     results['original_path'] = file_path
     results['processed_path'] = str(processed_file_path)
