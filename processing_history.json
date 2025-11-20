@@ -1,0 +1,18 @@
+[
+  {
+    "timestamp": "2025-11-17T21:40:12.667930",
+    "song_name": "Unknown Song (mock) - 2025-11-17T21:40:12.131140",
+    "uploaded_filename": "music_noise.wav",
+    "improvement_percent": 0.0,
+    "performance": {
+      "filter_a": 0.5,
+      "filter_b": 0.6,
+      "combined": 0.75
+    },
+    "time_seconds": {
+      "filter_a": 0.2,
+      "filter_b": 0.3,
+      "combined": 0.5
+    }
+  }
+]
