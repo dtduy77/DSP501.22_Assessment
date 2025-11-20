@@ -5,6 +5,8 @@ librosa==0.10.1
 soundfile==0.12.1
 matplotlib==3.8.2
 
+python-dotenv
+
 # API dependencies
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
