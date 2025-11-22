@@ -3,7 +3,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./audio_processing.db"
+from pathlib import Path
+db_path = Path(__file__).parent.parent / "audio_processing.db"
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{db_path.resolve()}"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}

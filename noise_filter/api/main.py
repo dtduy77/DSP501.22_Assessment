@@ -28,8 +28,8 @@ app.add_middleware(
 )
 
 # Create upload and results directories
-UPLOAD_DIR = Path("uploads")
-RESULTS_DIR = Path("results")
+UPLOAD_DIR = (Path(__file__).parent.parent / "uploads").resolve()
+RESULTS_DIR = (Path(__file__).parent.parent / "results").resolve()
 UPLOAD_DIR.mkdir(exist_ok=True)
 RESULTS_DIR.mkdir(exist_ok=True)
 
@@ -86,8 +86,15 @@ async def process_file(
     
     # Generate URLs for audio files
     original_url = f"/audio/uploads/{file.filename}"
-    processed_filename = Path(results['processed_path']).name
-    processed_url = f"/audio/results/{processed_filename}"
+    # Lấy đường dẫn tương đối từ noise_filter cho static URL
+    processed_path = Path(results['processed_path']).resolve()
+    # Tìm thư mục noise_filter
+    noise_filter_dir = Path(__file__).parent.resolve()
+    try:
+        rel_path = processed_path.relative_to(noise_filter_dir.parent)
+    except ValueError:
+        rel_path = processed_path.name  # fallback nếu lỗi
+    processed_url = f"/audio/{rel_path.as_posix()}"
     
     # Calculate file size
     file_size_kb = os.path.getsize(file_path) / 1024

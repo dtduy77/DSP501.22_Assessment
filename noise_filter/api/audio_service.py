@@ -1,3 +1,4 @@
+import librosa
 import numpy as np
 import time
 import soundfile as sf
@@ -12,6 +13,37 @@ from filter.wiener_smooth_filter import wiener_smooth
 from filter.mmse_lsa import mmse_lsa
 from utils.audio_io import load_wav
 from utils.metrics import snr_db
+
+
+def add_white_noise(clean_path, snr_db=20, sr=16000):
+    
+    clean_path_obj = Path(clean_path)
+    # Save noisy file to noise_filter/uploads, add timestamp
+    uploads_dir = Path(__file__).parent.parent / "uploads"
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    noisy_path = str(uploads_dir / f"{clean_path_obj.stem}_noisy_{timestamp}{clean_path_obj.suffix}")
+    
+    # Load clean audio
+    music, _ = librosa.load(clean_path, sr=sr, mono=True)
+    L = len(music)
+
+    # Generate white noise
+    white = np.random.randn(L)
+
+    # Scale noise theo SNR
+    P_music = np.mean(music**2)
+    P_noise = np.mean(white**2)
+    k = np.sqrt(P_music / (P_noise * 10**(snr_db/10)))
+    white_scaled = white * k
+
+    # Tạo noisy signal
+    noisy = music + white_scaled
+    noisy /= np.max(np.abs(noisy))
+
+    # Save noisy file
+    sf.write(noisy_path, noisy, sr)
+    return noisy_path
 
 
 def calculate_improvement(snr_before, snr_after):
@@ -38,27 +70,24 @@ def save_audio_file(audio_data, output_path, sr=16000):
     return output_path
 
 
-def process_audio_file(file_path: str, output_dir: str, noise_ref_path: str = None):
-    """
-    Process audio file with all three methods
-    Saves processed files and returns paths
-    """
-    # Load audio
-    noisy = load_wav(file_path)
+def process_audio_file(clean_path: str, output_dir: str, snr_for_noise: float = 20, sr: int = 16000):
 
-    # Load clean reference used for evaluation (test dataset)
-    # Use absolute path relative to this file's location
-    current_dir = Path(__file__).parent.parent
-    clean_ref_path = current_dir / "data" / "music_clean_1.wav"
-    clean = load_wav(str(clean_ref_path))
+    # Tạo noisy từ clean
+    # Tạo timestamp cho mọi file output
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    noisy_path = add_white_noise(clean_path, snr_db=snr_for_noise, sr=sr)
+
+    # Load lại dữ liệu
+    clean = load_wav(clean_path)
+    noisy = load_wav(noisy_path)
 
     # Align clean and noisy lengths for evaluation
     min_len_eval = min(len(clean), len(noisy))
     clean = clean[:min_len_eval]
     noisy = noisy[:min_len_eval]
-    
+
     results = {}
-    
+
     # Calculate baseline SNR (original noisy signal) using clean reference
     snr_input = snr_db(clean, noisy)
     
@@ -132,12 +161,14 @@ def process_audio_file(file_path: str, output_dir: str, noise_ref_path: str = No
     # Save processed file (combined as best result)
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
-    
-    file_basename = Path(file_path).stem
-    processed_file_path = output_path / f"{file_basename}_processed1.wav"
+
+    file_basename = Path(clean_path).stem
+    # Lưu file enhance (processed) với timestamp
+    processed_file_path = output_path / f"{file_basename}_processed_{timestamp}.wav"
     save_audio_file(best_output, str(processed_file_path))
-    
-    results['original_path'] = file_path
+
+    results['original_path'] = clean_path
     results['processed_path'] = str(processed_file_path)
-    
+    results['noisy_path'] = noisy_path
+
     return results
