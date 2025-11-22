@@ -69,9 +69,6 @@ async def process_file(file: UploadFile = File(...), db: Session = Depends(get_d
 
     Returns processing results with comparison metrics
     """
-    # 1. Validate file type
-    if not file.filename.endswith(".wav"):
-        raise HTTPException(status_code=400, detail="Only WAV files are supported")
 
     # 2. Save uploaded file (This is the CLEAN file)
     clean_file_path = UPLOAD_DIR / file.filename
@@ -113,7 +110,7 @@ async def process_file(file: UploadFile = File(...), db: Session = Depends(get_d
 
     # 5. Create database record
     db_record = AudioProcessing(
-        song_name=file.filename,
+        song_name=results['song_name'],
         original_file=original_file_url,  # <-- FILE CLEAN GỐC (uploads/)
         processed_file=processed_url,
         file_size_kb=round(file_size_kb, 2),

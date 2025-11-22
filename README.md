@@ -6,23 +6,63 @@ API lọc nhiễu âm thanh sử dụng **Wiener Smooth** và **MMSE-LSA** filte
 
 ## ⚡ Quick Start
 
-### 1. Cài đặt
+### 1. Cài đặt dependencies
 ```bash
 pip install -r requirement.txt
 ```
 
-### 2. Chạy API
+### 2. Cài đặt Chromaprint (fpcalc.exe) cho tính năng nhận diện bài hát
+
+**Tự động (Windows):**
+```bash
+# Tải và cài đặt fpcalc.exe tự động
+cd noise_filter
+python -c "
+import requests, zipfile, os
+url = 'https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-windows-x86_64.zip'
+r = requests.get(url)
+with open('chromaprint.zip', 'wb') as f: f.write(r.content)
+with zipfile.ZipFile('chromaprint.zip') as z: z.extractall('.')
+import shutil
+shutil.move('chromaprint-fpcalc-1.5.1-windows-x86_64/fpcalc.exe', 'fpcalc.exe')
+shutil.rmtree('chromaprint-fpcalc-1.5.1-windows-x86_64')
+os.remove('chromaprint.zip')
+print('✅ fpcalc.exe đã được cài đặt!')
+"
+```
+
+**Thủ công:**
+1. Tải: https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-windows-x86_64.zip
+2. Giải nén và copy `fpcalc.exe` vào thư mục `noise_filter/`
+
+### 3. Cấu hình AcoustID API Key
+
+**Tạo file .env:**
+```bash
+cd noise_filter
+echo API_KEY=cSpUJKpD > .env
+```
+
+**Hoặc đăng ký API key riêng (khuyên dùng):**
+1. Truy cập: https://acoustid.org/api-key  
+2. Đăng ký miễn phí
+3. Thay `cSpUJKpD` trong file `.env` bằng API key của bạn
+
+### 4. Chạy API
 ```bash
 cd noise_filter
 uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 3. Mở trình duyệt
+### 5. Mở trình duyệt
 ```
 http://localhost:8000/docs
 ```
 
-**Xong!** Bạn đã có thể upload file WAV và xử lý ngay trên giao diện Swagger.
+**Xong!** Bây giờ bạn có thể:
+- ✅ Upload file WAV/MP3 và xử lý lọc nhiễu
+- ✅ Nhận diện tên bài hát tự động
+- ✅ Xem kết quả so sánh các bộ lọc
 
 ---
 
@@ -92,7 +132,7 @@ Kết quả lưu trong thư mục `results/`
 ```json
 {
   "id": 1,
-  "song_name": "audio.wav",
+  "song_name": "Shape of You - Ed Sheeran",  // 🎤 Tự động nhận diện
   "original_file": "/audio/uploads/audio.wav",
   "processed_file": "/audio/results/audio_processed.wav",
   "file_size_kb": 123.4,
@@ -111,7 +151,8 @@ Kết quả lưu trong thư mục `results/`
     "best": {
       "improvement_percent": 25.8,
       "performance": 0.87,
-      "time_seconds": 0.001
+      "time_seconds": 0.001,
+      "selected_method": "mmse_lsa"
     }
   }
 }
@@ -178,13 +219,19 @@ DSP501.22_Assessment/
 │
 └── noise_filter/
     │
+    ├── .env                     # 🔑 AcoustID API Key
+    ├── fpcalc.exe               # 🎵 Audio fingerprinting tool
+    │
     ├── api/                     # 🌐 REST API
     │   ├── main.py              # Endpoints
     │   ├── models.py            # Request/Response schemas
     │   ├── database.py          # SQLite database
     │   └── audio_service.py     # Logic xử lý audio
     │
-    ├── filter/                  # 🎵 Bộ lọc
+    ├── detect/                  # 🎤 Nhận diện bài hát
+    │   └── detect_song.py       # AcoustID song recognition
+    │
+    ├── filter/                  # 🎵 Bộ lọc nhiễu
     │   ├── wiener_smooth_filter.py
     │   └── mmse_lsa.py
     │
@@ -196,6 +243,7 @@ DSP501.22_Assessment/
     ├── results/                 # 📂 Kết quả xử lý
     ├── uploads/                 # 📂 File upload
     │
+    ├── run_detect_song.py       # Chạy song detection độc lập
     ├── run_wiener_smooth.py     # Chạy Wiener độc lập
     └── run_mmse_lsa.py          # Chạy MMSE-LSA độc lập
 ```
@@ -251,6 +299,34 @@ cd noise_filter
 uvicorn api.main:app --reload
 ```
 
+### Lỗi: `Thiếu file 'fpcalc.exe'`
+```bash
+# Kiểm tra file tồn tại
+ls fpcalc.exe  # Linux/Mac
+dir fpcalc.exe # Windows
+
+# Nếu không có, tải lại:
+# Windows: Chạy script tự động ở phần Quick Start
+# Linux/Mac: 
+wget https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-linux-x86_64.tar.gz
+tar -xf chromaprint-fpcalc-1.5.1-linux-x86_64.tar.gz
+cp chromaprint-fpcalc-1.5.1-linux-x86_64/fpcalc .
+```
+
+### Song detection trả về "Unknown Song"
+```bash
+# 1. Kiểm tra API key
+cat .env  # Xem API key có đúng không
+
+# 2. Thử với file chất lượng cao
+# - File WAV/FLAC tốt hơn MP3
+# - Bài hát nổi tiếng detect dễ hơn
+# - File ít nhiễu detect chính xác hơn
+
+# 3. Đăng ký API key riêng (khuyên dùng)
+# https://acoustid.org/api-key
+```
+
 ### API không truy cập được từ máy khác
 ```bash
 # Đảm bảo dùng --host 0.0.0.0
@@ -283,6 +359,7 @@ print(response.json())
 
 ## 📦 Dependencies
 
+### Python packages
 - **numpy** - Tính toán mảng
 - **scipy** - Xử lý tín hiệu (exp1)
 - **librosa** - STFT/iSTFT
@@ -292,6 +369,12 @@ print(response.json())
 - **uvicorn** - ASGI server
 - **sqlalchemy** - Database ORM
 - **pydantic** - Data validation
+- **acoustid** - Song recognition
+- **python-dotenv** - Environment variables
+
+### External tools
+- **fpcalc.exe** - Chromaprint audio fingerprinting
+- **AcoustID API** - Online music database
 
 ---
 
