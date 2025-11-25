@@ -1,0 +1,8 @@
+# Visual Studio Code workspace settings
+.vscode/
+.vscode/*
+
+# Python virtual environments
+venv/
+.venv/
+SZA Singing
