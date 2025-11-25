@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 from sidebar import render_sidebar
 
-st.set_page_config(page_title="History - Audio Denoiser", layout="wide")
+st.set_page_config(page_title="Lịch sử", layout="wide")
 
 # ==================== SIDEBAR ====================
 render_sidebar()
